@@ -37,6 +37,7 @@ import SearchCandidates from "../Pages/Recruiter/SearchCandidates";
 import CandidateProfile from "../Pages/Recruiter/CandidateProfile";
 import CompareResumes from "../Pages/Recruiter/CompareResumes";
 import ManageJobs from "../Pages/Recruiter/ManageJobs";
+import Invitations from "../Pages/Recruiter/Invitations";
 
 function AppRouter() {
   return (
@@ -97,6 +98,7 @@ function AppRouter() {
         <Route path="candidates/:slug" element={<CandidateProfile />} />
         <Route path="compare" element={<CompareResumes />} />
         <Route path="jobs" element={<ManageJobs />} />
+        <Route path="invitations" element={<Invitations />} />
         <Route path="billing" element={<Billing />} />
       </Route>
 
