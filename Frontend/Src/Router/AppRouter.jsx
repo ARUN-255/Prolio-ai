@@ -5,6 +5,15 @@ import HomePage from "../Pages/Home/HomePage";
 import Login from "../Pages/Public/Login";
 import Signup from "../Pages/Public/Signup";
 import PublicProfile from "../Pages/Public/PublicProfile";
+import Features from "../Pages/Public/Features";
+import Students from "../Pages/Public/Students";
+import Recruiters from "../Pages/Public/Recruiters";
+import Pricing from "../Pages/Public/Pricing";
+import Terms from "../Pages/Public/Terms";
+import PrivacyPolicy from "../Pages/Public/PrivacyPolicy";
+import Refund from "../Pages/Public/Refund";
+import NotFound from "../Pages/Public/NotFound";
+import Billing from "../Pages/Billing";
 
 import ProtectedRoute from "./ProtectedRoute";
 import RoleRoute from "./RoleRoute";
@@ -22,34 +31,39 @@ import Resumes from "../Pages/Student/Resumes";
 import CreateResume from "../Pages/Student/CreateResume";
 import ResumeEditor from "../Pages/Student/ResumeEditor";
 import ATSChecker from "../Pages/Student/ATSChecker";
+
 import RecruiterDashboard from "../Pages/Recruiter/Dashboard";
 import SearchCandidates from "../Pages/Recruiter/SearchCandidates";
 import CandidateProfile from "../Pages/Recruiter/CandidateProfile";
-
-function PlaceholderPage({ title }) {
-  return (
-    <div className="placeholder-page">
-      <p className="eyebrow">Prolio AI</p>
-      <h1>{title}</h1>
-      <p>This page will be completed in its dedicated frontend step.</p>
-    </div>
-  );
-}
+import CompareResumes from "../Pages/Recruiter/CompareResumes";
+import ManageJobs from "../Pages/Recruiter/ManageJobs";
 
 function AppRouter() {
   return (
     <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/welcome" element={<Navigate to="/" replace />} />
-      <Route path="/features" element={<PlaceholderPage title="Features" />} />
-      <Route path="/students" element={<PlaceholderPage title="For Students" />} />
-      <Route path="/recruiters" element={<PlaceholderPage title="For Recruiters" />} />
-      <Route path="/pricing" element={<PlaceholderPage title="Pricing" />} />
+      <Route path="/features" element={<Features />} />
+      <Route path="/students" element={<Students />} />
+      <Route path="/recruiters" element={<Recruiters />} />
+      <Route path="/pricing" element={<Pricing />} />
+      <Route path="/terms" element={<Terms />} />
+      <Route path="/privacy" element={<PrivacyPolicy />} />
+      <Route path="/refund" element={<Refund />} />
       <Route path="/p/:slug" element={<PublicProfile />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Signup />} />
 
-      <Route path="/student" element={<ProtectedRoute><RoleRoute allowedRole="student"><DashboardLayout /></RoleRoute></ProtectedRoute>}>
+      <Route
+        path="/student"
+        element={
+          <ProtectedRoute>
+            <RoleRoute allowedRole="student">
+              <DashboardLayout />
+            </RoleRoute>
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<StudentDashboard />} />
         <Route path="portfolio" element={<PortfolioMaker />} />
@@ -64,18 +78,29 @@ function AppRouter() {
         <Route path="resumes/new" element={<CreateResume />} />
         <Route path="resumes/:id" element={<ResumeEditor />} />
         <Route path="ats" element={<ATSChecker />} />
+        <Route path="billing" element={<Billing />} />
       </Route>
 
-      <Route path="/recruiter" element={<ProtectedRoute><RoleRoute allowedRole="recruiter"><DashboardLayout /></RoleRoute></ProtectedRoute>}>
+      <Route
+        path="/recruiter"
+        element={
+          <ProtectedRoute>
+            <RoleRoute allowedRole="recruiter">
+              <DashboardLayout />
+            </RoleRoute>
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<RecruiterDashboard />} />
         <Route path="candidates" element={<SearchCandidates />} />
         <Route path="candidates/:slug" element={<CandidateProfile />} />
-        <Route path="compare" element={<PlaceholderPage title="Resume Comparison" />} />
-        <Route path="jobs" element={<PlaceholderPage title="Jobs" />} />
+        <Route path="compare" element={<CompareResumes />} />
+        <Route path="jobs" element={<ManageJobs />} />
+        <Route path="billing" element={<Billing />} />
       </Route>
 
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }
