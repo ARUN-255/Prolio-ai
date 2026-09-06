@@ -96,43 +96,9 @@ jobs:
           cat /tmp/prolio-backend.log
           exit 1
 
-      - name: Auth and recruiter invitation integration test
+      - name: Full API smoke test
         shell: bash
-        run: |
-          set -euo pipefail
-
-          STUDENT=$(curl --fail --silent -X POST http://127.0.0.1:5000/api/auth/register \
-            -H 'Content-Type: application/json' \
-            -d '{"name":"CI Student","email":"student-ci@prolio.test","password":"TestPass123!","role":"student"}')
-
-          RECRUITER=$(curl --fail --silent -X POST http://127.0.0.1:5000/api/auth/register \
-            -H 'Content-Type: application/json' \
-            -d '{"name":"CI Recruiter","email":"recruiter-ci@prolio.test","password":"TestPass123!","role":"recruiter"}')
-
-          STUDENT_TOKEN=$(node -e 'const x=JSON.parse(process.argv[1]); if(!x.token) process.exit(1); process.stdout.write(x.token)' "$STUDENT")
-          RECRUITER_TOKEN=$(node -e 'const x=JSON.parse(process.argv[1]); if(!x.token) process.exit(1); process.stdout.write(x.token)' "$RECRUITER")
-
-          curl --fail --silent -X POST http://127.0.0.1:5000/api/students/portfolio \
-            -H "Authorization: Bearer $STUDENT_TOKEN" \
-            -H 'Content-Type: application/json' \
-            -d '{"headline":"Full Stack Developer","bio":"CI profile","location":"Tamil Nadu, India","isPublic":true}' >/tmp/profile.json
-
-          CANDIDATES=$(curl --fail --silent http://127.0.0.1:5000/api/recruiter/candidates/search \
-            -H "Authorization: Bearer $RECRUITER_TOKEN")
-
-          CANDIDATE_ID=$(node -e 'const x=JSON.parse(process.argv[1]); if(!x.candidates?.length) process.exit(1); process.stdout.write(String(x.candidates[0].id))' "$CANDIDATES")
-
-          INVITE=$(curl --fail --silent -X POST http://127.0.0.1:5000/api/recruiter/invitations \
-            -H "Authorization: Bearer $RECRUITER_TOKEN" \
-            -H 'Content-Type: application/json' \
-            -d "{\"candidate_id\":$CANDIDATE_ID,\"message\":\"We would like to discuss an opportunity with you.\"}")
-
-          node -e 'const x=JSON.parse(process.argv[1]); if(!x.success || !x.invitation?.id) { console.error(x); process.exit(1); }' "$INVITE"
-
-          INVITES=$(curl --fail --silent http://127.0.0.1:5000/api/recruiter/invitations \
-            -H "Authorization: Bearer $RECRUITER_TOKEN")
-
-          node -e 'const x=JSON.parse(process.argv[1]); if(x.count !== 1 || x.invitations?.[0]?.candidate_name !== "CI Student") { console.error(x); process.exit(1); }' "$INVITES"
+        run: bash Backend/tests/full-smoke.sh
 
       - name: Show backend log on failure
         if: failure()
