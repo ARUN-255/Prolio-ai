@@ -2,6 +2,11 @@ const pool = require("./db");
 
 const ensureSchema = async () => {
   await pool.query(`
+    ALTER TABLE subscriptions
+      ADD COLUMN IF NOT EXISTS current_period_start TIMESTAMP,
+      ADD COLUMN IF NOT EXISTS current_period_end TIMESTAMP,
+      ADD COLUMN IF NOT EXISTS cancel_at_period_end BOOLEAN NOT NULL DEFAULT FALSE;
+
     CREATE TABLE IF NOT EXISTS recruiter_jobs (
       id SERIAL PRIMARY KEY,
       recruiter_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
