@@ -8,10 +8,10 @@ users(
     role VARCHAR(20) NOT NULL CHECK (role IN('student','recruiter')),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CHECK(email IS NOT NULL OR phone IS NOT NULL) 
+    CHECK(email IS NOT NULL OR phone IS NOT NULL)
 );
 
-CREATE TABLE IF NOT EXISTS 
+CREATE TABLE IF NOT EXISTS
 student_profiles (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL UNIQUE,
@@ -46,8 +46,7 @@ CONSTRAINT fk_projects_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE
 
 ALTER TABLE projects
 ADD COLUMN IF NOT EXISTS
-updated_at TIMESTAMP DEFAULT
-CURRENT_TIMESTAMP;
+updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
 
 CREATE TABLE IF NOT EXISTS
 experiences(
@@ -65,7 +64,7 @@ updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 CONSTRAINT fk_experiences_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS 
+CREATE TABLE IF NOT EXISTS
 education(
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
@@ -82,7 +81,7 @@ education(
     CONSTRAINT fk_education_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS 
+CREATE TABLE IF NOT EXISTS
 skills (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
@@ -95,7 +94,7 @@ skills (
     CONSTRAINT fk_skills_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS 
+CREATE TABLE IF NOT EXISTS
 certificates(
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
@@ -115,23 +114,22 @@ ADD COLUMN IF NOT EXISTS public_slug VARCHAR(150) UNIQUE;
 CREATE TABLE IF NOT EXISTS resumes (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
-
     title VARCHAR(200) NOT NULL,
     template_name VARCHAR(100) DEFAULT 'classic',
-
     resume_data JSONB NOT NULL DEFAULT '{}'::jsonb,
-
     is_primary BOOLEAN DEFAULT FALSE,
     is_public BOOLEAN DEFAULT FALSE,
-
+    pdf_url TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
     CONSTRAINT fk_resumes_user
         FOREIGN KEY (user_id)
         REFERENCES users(id)
         ON DELETE CASCADE
 );
+
+ALTER TABLE resumes
+ADD COLUMN IF NOT EXISTS pdf_url TEXT;
 
 -- ============================================
 -- ATS ANALYSIS
@@ -139,35 +137,26 @@ CREATE TABLE IF NOT EXISTS resumes (
 
 CREATE TABLE IF NOT EXISTS ats_analyses (
     id SERIAL PRIMARY KEY,
-
     user_id INTEGER NOT NULL,
     resume_id INTEGER NOT NULL,
-
     job_title VARCHAR(200),
     job_description TEXT NOT NULL,
-
     ats_score INTEGER,
-
     matched_keywords JSONB DEFAULT '[]'::jsonb,
     missing_keywords JSONB DEFAULT '[]'::jsonb,
     matched_skills JSONB DEFAULT '[]'::jsonb,
     missing_skills JSONB DEFAULT '[]'::jsonb,
-
     strengths JSONB DEFAULT '[]'::jsonb,
     improvements JSONB DEFAULT '[]'::jsonb,
-
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
     CONSTRAINT fk_ats_user
         FOREIGN KEY (user_id)
         REFERENCES users(id)
         ON DELETE CASCADE,
-
     CONSTRAINT fk_ats_resume
         FOREIGN KEY (resume_id)
         REFERENCES resumes(id)
         ON DELETE CASCADE,
-
     CONSTRAINT chk_ats_score
         CHECK (
             ats_score IS NULL
@@ -177,7 +166,6 @@ CREATE TABLE IF NOT EXISTS ats_analyses (
 
 ALTER TABLE ats_analyses
 ADD COLUMN IF NOT EXISTS ai_feedback JSONB DEFAULT NULL;
-
 
 CREATE TABLE IF NOT EXISTS plans (
     id SERIAL PRIMARY KEY,
@@ -200,13 +188,20 @@ CREATE TABLE IF NOT EXISTS subscriptions (
     status VARCHAR(20) NOT NULL DEFAULT 'active'
         CHECK (status IN ('active', 'cancelled', 'expired')),
     razorpay_subscription_id TEXT,
+    current_period_start TIMESTAMP,
+    current_period_end TIMESTAMP,
+    cancel_at_period_end BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE subscriptions
+ADD COLUMN IF NOT EXISTS current_period_start TIMESTAMP,
+ADD COLUMN IF NOT EXISTS current_period_end TIMESTAMP,
+ADD COLUMN IF NOT EXISTS cancel_at_period_end BOOLEAN NOT NULL DEFAULT FALSE;
 
 INSERT INTO plans
 (name, role, price_monthly, price_yearly, limits)
 VALUES
-
 (
     'Student Free',
     'student',
@@ -228,7 +223,6 @@ VALUES
         "custom_link": false
     }'::jsonb
 ),
-
 (
     'Student Pro',
     'student',
@@ -250,7 +244,6 @@ VALUES
         "custom_link": true
     }'::jsonb
 ),
-
 (
     'Recruiter Free',
     'recruiter',
@@ -264,7 +257,6 @@ VALUES
         "resume_downloads_per_month": 30
     }'::jsonb
 ),
-
 (
     'Recruiter Pro',
     'recruiter',
@@ -278,7 +270,6 @@ VALUES
         "resume_downloads_per_month": 100
     }'::jsonb
 ),
-
 (
     'Recruiter Enterprise',
     'recruiter',
@@ -292,55 +283,56 @@ VALUES
         "resume_downloads_per_month": null
     }'::jsonb
 )
-
 ON CONFLICT (name) DO NOTHING;
 
 CREATE TABLE IF NOT EXISTS payment_orders (
     id SERIAL PRIMARY KEY,
-
     user_id INTEGER NOT NULL
         REFERENCES users(id)
         ON DELETE CASCADE,
-
     plan_id INTEGER NOT NULL
         REFERENCES plans(id),
-
-    razorpay_order_id TEXT
-        UNIQUE NOT NULL,
-
-    razorpay_payment_id TEXT
-        UNIQUE,
-
-    billing_cycle VARCHAR(20)
-        NOT NULL
-        CHECK (
-            billing_cycle IN (
-                'monthly',
-                'yearly'
-            )
-        ),
-
-    amount_paise INTEGER
-        NOT NULL
-        CHECK (amount_paise > 0),
-
-    currency VARCHAR(10)
-        NOT NULL
-        DEFAULT 'INR',
-
-    status VARCHAR(20)
-        NOT NULL
-        DEFAULT 'created'
-        CHECK (
-            status IN (
-                'created',
-                'paid',
-                'failed'
-            )
-        ),
-
-    created_at TIMESTAMP
-        DEFAULT CURRENT_TIMESTAMP,
-
+    razorpay_order_id TEXT UNIQUE NOT NULL,
+    razorpay_payment_id TEXT UNIQUE,
+    billing_cycle VARCHAR(20) NOT NULL
+        CHECK (billing_cycle IN ('monthly', 'yearly')),
+    amount_paise INTEGER NOT NULL CHECK (amount_paise > 0),
+    currency VARCHAR(10) NOT NULL DEFAULT 'INR',
+    status VARCHAR(20) NOT NULL DEFAULT 'created'
+        CHECK (status IN ('created', 'paid', 'failed')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     paid_at TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS recruiter_jobs (
+    id SERIAL PRIMARY KEY,
+    recruiter_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    title VARCHAR(200) NOT NULL,
+    company VARCHAR(200),
+    location VARCHAR(200),
+    employment_type VARCHAR(50),
+    description TEXT NOT NULL,
+    required_skills TEXT[] DEFAULT '{}',
+    status VARCHAR(20) NOT NULL DEFAULT 'active'
+        CHECK (status IN ('draft', 'active', 'closed')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_recruiter_jobs_recruiter
+ON recruiter_jobs(recruiter_id);
+
+CREATE TABLE IF NOT EXISTS recruiter_invitations (
+    id SERIAL PRIMARY KEY,
+    recruiter_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    candidate_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    job_id INTEGER REFERENCES recruiter_jobs(id) ON DELETE SET NULL,
+    message TEXT,
+    status VARCHAR(20) NOT NULL DEFAULT 'sent'
+        CHECK (status IN ('sent', 'viewed', 'accepted', 'declined')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (recruiter_id, candidate_id, job_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_recruiter_invitations_recruiter
+ON recruiter_invitations(recruiter_id);
