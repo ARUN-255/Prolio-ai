@@ -1,11 +1,12 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Prolio AI backend API",
+  "main": "Src/app.js",
   "scripts": {
-    "start": "node src/app.js",
-    "dev": "nodemon src/app.js"
+    "start": "node Src/app.js",
+    "dev": "nodemon Src/app.js",
+    "check": "find Src -name '*.js' -print0 | xargs -0 -n1 node --check"
   },
   "keywords": [],
   "author": "",
