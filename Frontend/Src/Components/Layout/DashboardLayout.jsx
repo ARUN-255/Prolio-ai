@@ -5,19 +5,14 @@ import {
   FileText,
   Home,
   LogOut,
+  MailCheck,
   Menu,
   UserRound,
   X,
 } from "lucide-react";
 
 import { useState } from "react";
-import {
-  Link,
-  NavLink,
-  Outlet,
-  useNavigate,
-} from "react-router-dom";
-
+import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../../Context/AuthContext";
 
 const studentNavigation = [
@@ -33,6 +28,7 @@ const recruiterNavigation = [
   { label: "Candidates", to: "/recruiter/candidates", icon: UserRound },
   { label: "Resume Comparison", to: "/recruiter/compare", icon: FileCheck2 },
   { label: "Jobs", to: "/recruiter/jobs", icon: BriefcaseBusiness },
+  { label: "Invitations", to: "/recruiter/invitations", icon: MailCheck },
   { label: "Plan & Billing", to: "/recruiter/billing", icon: CreditCard },
 ];
 
@@ -55,12 +51,7 @@ function DashboardLayout() {
   return (
     <div className="dashboard-layout">
       {sidebarOpen && (
-        <button
-          type="button"
-          className="dashboard-overlay"
-          aria-label="Close navigation"
-          onClick={closeSidebar}
-        />
+        <button type="button" className="dashboard-overlay" aria-label="Close navigation" onClick={closeSidebar} />
       )}
 
       <aside className={`dashboard-sidebar ${sidebarOpen ? "is-open" : ""}`}>
@@ -69,25 +60,12 @@ function DashboardLayout() {
             <span className="brand-mark">P</span>
             <span>Prolio <strong>AI</strong></span>
           </Link>
-
-          <button
-            type="button"
-            className="dashboard-sidebar-close"
-            onClick={closeSidebar}
-            aria-label="Close sidebar"
-          >
-            <X size={22} />
-          </button>
+          <button type="button" className="dashboard-sidebar-close" onClick={closeSidebar} aria-label="Close sidebar"><X size={22} /></button>
         </div>
 
         <nav className="dashboard-navigation" aria-label="Dashboard navigation">
           {navigation.map(({ label, to, icon: Icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              onClick={closeSidebar}
-              className={({ isActive }) => `dashboard-nav-link ${isActive ? "active" : ""}`}
-            >
+            <NavLink key={to} to={to} onClick={closeSidebar} className={({ isActive }) => `dashboard-nav-link ${isActive ? "active" : ""}`}>
               <Icon size={19} />
               <span>{label}</span>
             </NavLink>
@@ -96,48 +74,20 @@ function DashboardLayout() {
 
         <div className="dashboard-sidebar-bottom">
           <div className="dashboard-user">
-            <div className="dashboard-user-avatar">
-              {user?.name?.charAt(0)?.toUpperCase() || "U"}
-            </div>
-            <div className="dashboard-user-info">
-              <strong>{user?.name || "User"}</strong>
-              <span>{isRecruiter ? "Recruiter" : "Student"}</span>
-            </div>
+            <div className="dashboard-user-avatar">{user?.name?.charAt(0)?.toUpperCase() || "U"}</div>
+            <div className="dashboard-user-info"><strong>{user?.name || "User"}</strong><span>{isRecruiter ? "Recruiter" : "Student"}</span></div>
           </div>
-
-          <button type="button" className="dashboard-logout" onClick={handleLogout}>
-            <LogOut size={18} />
-            <span>Log out</span>
-          </button>
+          <button type="button" className="dashboard-logout" onClick={handleLogout}><LogOut size={18} /><span>Log out</span></button>
         </div>
       </aside>
 
       <div className="dashboard-main">
         <header className="dashboard-header">
-          <button
-            type="button"
-            className="dashboard-menu-button"
-            onClick={() => setSidebarOpen((current) => !current)}
-            aria-label="Open navigation"
-          >
-            <Menu size={23} />
-          </button>
-
-          <div className="dashboard-header-title">
-            <span>{isRecruiter ? "Recruiter Workspace" : "Student Workspace"}</span>
-          </div>
-
-          <div className="dashboard-header-user">
-            <span>{user?.name || "User"}</span>
-            <div className="dashboard-header-avatar">
-              {user?.name?.charAt(0)?.toUpperCase() || "U"}
-            </div>
-          </div>
+          <button type="button" className="dashboard-menu-button" onClick={() => setSidebarOpen((current) => !current)} aria-label="Open navigation"><Menu size={23} /></button>
+          <div className="dashboard-header-title"><span>{isRecruiter ? "Recruiter Workspace" : "Student Workspace"}</span></div>
+          <div className="dashboard-header-user"><span>{user?.name || "User"}</span><div className="dashboard-header-avatar">{user?.name?.charAt(0)?.toUpperCase() || "U"}</div></div>
         </header>
-
-        <main className="dashboard-content">
-          <Outlet />
-        </main>
+        <main className="dashboard-content"><Outlet /></main>
       </div>
     </div>
   );
