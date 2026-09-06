@@ -1,8 +1,19 @@
-import { ExternalLink, Github, Linkedin, MapPin } from "lucide-react";
+import {
+  Bot,
+  ExternalLink,
+  Github,
+  Linkedin,
+  LoaderCircle,
+  MapPin,
+  Send,
+  X,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { getPublicPortfolio } from "../../Services/portfolioService";
+import { askPortfolioChatbot } from "../../Services/chatbotService";
 import "../../Styles/portfolioPreview.css";
+import "../../Styles/publicChatbot.css";
 
 function PublicProfile() {
   const { slug } = useParams();
@@ -11,6 +22,13 @@ function PublicProfile() {
   const [portfolio, setPortfolio] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [chatOpen, setChatOpen] = useState(false);
+  const [question, setQuestion] = useState("");
+  const [asking, setAsking] = useState(false);
+  const [chatError, setChatError] = useState("");
+  const [messages, setMessages] = useState([
+    { role: "assistant", text: "Ask me a question about this public professional profile." },
+  ]);
 
   useEffect(() => {
     const load = async () => {
@@ -27,6 +45,29 @@ function PublicProfile() {
 
     load();
   }, [slug]);
+
+  const ask = async (event) => {
+    event.preventDefault();
+    const clean = question.trim();
+    if (!clean || asking) return;
+
+    setQuestion("");
+    setChatError("");
+    setMessages((current) => [...current, { role: "user", text: clean }]);
+
+    try {
+      setAsking(true);
+      const data = await askPortfolioChatbot(slug, clean);
+      setMessages((current) => [
+        ...current,
+        { role: "assistant", text: data?.answer || "I could not find an answer in the public profile." },
+      ]);
+    } catch (err) {
+      setChatError(err.response?.data?.message || "Unable to answer right now.");
+    } finally {
+      setAsking(false);
+    }
+  };
 
   if (loading) return <div className="public-portfolio-status">Loading portfolio...</div>;
   if (error || !portfolio) return <div className="public-portfolio-status"><h1>Portfolio unavailable</h1><p>{error || "Portfolio not found."}</p></div>;
@@ -58,7 +99,7 @@ function PublicProfile() {
 
         {skills.length > 0 && <section className="portfolio-live-section"><h2>Skills</h2><div className="portfolio-live-skills">{skills.map((skill) => <span key={`${skill.name}-${skill.category}`}>{skill.name}</span>)}</div></section>}
 
-        {projects.length > 0 && <section className="portfolio-live-section"><h2>Projects</h2><div className="portfolio-live-grid">{projects.map((project) => <article className="portfolio-live-card" key={project.title}><h3>{project.title}</h3>{project.description && <p>{project.description}</p>}{Array.isArray(project.tech_stack) && project.tech_stack.length > 0 && <small>{project.tech_stack.join(" · ")}</small>}{project.link && <a href={project.link} target="_blank" rel="noreferrer">View project <ExternalLink size={14} /></a>}</article>)}</div></section>}
+        {projects.length > 0 && <section className="portfolio-live-section"><h2>Projects</h2><div className="portfolio-live-grid">{projects.map((project) => <article className="portfolio-live-card" key={project.id || project.title}><h3>{project.title}</h3>{project.description && <p>{project.description}</p>}{Array.isArray(project.tech_stack) && project.tech_stack.length > 0 && <small>{project.tech_stack.join(" · ")}</small>}{project.link && <a href={project.link} target="_blank" rel="noreferrer">View project <ExternalLink size={14} /></a>}</article>)}</div></section>}
 
         {education.length > 0 && <section className="portfolio-live-section"><h2>Education</h2><div className="portfolio-live-list">{education.map((item) => <article key={`${item.institution}-${item.degree}`}><h3>{item.degree}{item.field_of_study ? ` — ${item.field_of_study}` : ""}</h3><p>{item.institution}</p><small>{item.start_year || ""}{item.end_year ? ` – ${item.end_year}` : ""}{item.grade ? ` · ${item.grade}` : ""}</small>{item.description && <p>{item.description}</p>}</article>)}</div></section>}
 
@@ -67,12 +108,20 @@ function PublicProfile() {
         {certificates.length > 0 && <section className="portfolio-live-section"><h2>Certificates</h2><div className="portfolio-live-grid">{certificates.map((item) => <article className="portfolio-live-card" key={`${item.title}-${item.issuer}`}><h3>{item.title}</h3>{item.issuer && <p>{item.issuer}</p>}{item.date && <small>{String(item.date).slice(0, 10)}</small>}{item.file_url && <a href={item.file_url} target="_blank" rel="noreferrer">View credential <ExternalLink size={14} /></a>}</article>)}</div></section>}
 
         {portfolio.plan?.portfolio_watermark && (
-          <footer className="portfolio-watermark">
-            <span className="brand-mark" aria-hidden="true">P</span>
-            <span>Portfolio powered by <strong>Prolio AI</strong></span>
-          </footer>
+          <footer className="portfolio-watermark"><span className="brand-mark" aria-hidden="true">P</span><span>Portfolio powered by <strong>Prolio AI</strong></span></footer>
         )}
       </article>
+
+      <button className="public-chat-toggle" type="button" onClick={() => setChatOpen((open) => !open)} aria-label="Ask profile AI"><Bot size={20} /> Ask profile AI</button>
+
+      {chatOpen && (
+        <aside className="public-chat-panel" aria-label="Portfolio chatbot">
+          <header><div><Bot size={19} /><div><strong>Profile AI</strong><span>Answers only from public profile data</span></div></div><button type="button" onClick={() => setChatOpen(false)} aria-label="Close chat"><X size={18} /></button></header>
+          <div className="public-chat-messages">{messages.map((message, index) => <div className={`public-chat-message ${message.role}`} key={`${message.role}-${index}`}>{message.text}</div>)}{asking && <div className="public-chat-message assistant typing"><LoaderCircle className="spin" size={15} /> Thinking...</div>}</div>
+          {chatError && <div className="public-chat-error">{chatError}</div>}
+          <form onSubmit={ask}><input maxLength="500" value={question} onChange={(e) => setQuestion(e.target.value)} placeholder="Ask about skills, projects or experience..." /><button type="submit" disabled={asking || !question.trim()} aria-label="Send question"><Send size={17} /></button></form>
+        </aside>
+      )}
     </main>
   );
 }
