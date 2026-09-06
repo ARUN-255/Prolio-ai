@@ -1,55 +1,38 @@
 const crypto = require("crypto");
 
-const CHATBOT_VISITOR_COOKIE =
-  "prolio_chat_visitor";
+const CHATBOT_VISITOR_COOKIE = "prolio_chat_visitor";
+const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
 
-const THIRTY_DAYS =
-  30 * 24 * 60 * 60 * 1000;
+const isSafeVisitorId = (value) => {
+  return typeof value === "string" && /^[a-zA-Z0-9-]{8,100}$/.test(value);
+};
 
-const chatbotVisitor = (
-  req,
-  res,
-  next
-) => {
+const chatbotVisitor = (req, res, next) => {
   try {
-    let visitorId =
-      req.cookies?.[
-        CHATBOT_VISITOR_COOKIE
-      ];
+    const headerVisitorId = req.headers["x-prolio-visitor"];
+    let visitorId = isSafeVisitorId(headerVisitorId)
+      ? headerVisitorId
+      : req.cookies?.[CHATBOT_VISITOR_COOKIE];
 
-    // Create stable visitor ID
-    // if browser does not already have one
-    if (!visitorId) {
-      visitorId =
-        crypto.randomUUID();
-
-      res.cookie(
-        CHATBOT_VISITOR_COOKIE,
-        visitorId,
-        {
-          httpOnly: true,
-          sameSite: "lax",
-          secure:
-            process.env.NODE_ENV ===
-            "production",
-          maxAge: THIRTY_DAYS,
-        }
-      );
+    if (!isSafeVisitorId(visitorId)) {
+      visitorId = crypto.randomUUID();
     }
 
-    // Secondary identifier:
-    // hash IP instead of storing raw IP
-    const forwardedFor =
-      req.headers["x-forwarded-for"];
+    // Keep the cookie for same-site production requests while also allowing
+    // the public frontend to send the stable visitor id explicitly.
+    if (req.cookies?.[CHATBOT_VISITOR_COOKIE] !== visitorId) {
+      res.cookie(CHATBOT_VISITOR_COOKIE, visitorId, {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        maxAge: THIRTY_DAYS,
+      });
+    }
 
-    const ip =
-      typeof forwardedFor === "string"
-        ? forwardedFor
-            .split(",")[0]
-            .trim()
-        : req.ip ||
-          req.socket?.remoteAddress ||
-          "unknown";
+    const forwardedFor = req.headers["x-forwarded-for"];
+    const ip = typeof forwardedFor === "string"
+      ? forwardedFor.split(",")[0].trim()
+      : req.ip || req.socket?.remoteAddress || "unknown";
 
     const ipHash = crypto
       .createHash("sha256")
@@ -63,15 +46,11 @@ const chatbotVisitor = (
 
     next();
   } catch (error) {
-    console.error(
-      "CHATBOT VISITOR ERROR:",
-      error
-    );
+    console.error("CHATBOT VISITOR ERROR:", error);
 
     return res.status(500).json({
       success: false,
-      message:
-        "Unable to identify chatbot visitor",
+      message: "Unable to identify chatbot visitor",
     });
   }
 };
