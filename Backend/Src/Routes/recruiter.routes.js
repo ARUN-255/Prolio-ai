@@ -23,6 +23,13 @@ const {
   analyzePublicProject,
 } = require("../Controllers/Recruiter/projectAnalyzerController");
 
+const {
+  getJobs,
+  createJob,
+  updateJob,
+  deleteJob,
+} = require("../Controllers/Recruiter/jobController");
+
 router.get(
   "/candidates/search",
   protect,
@@ -70,6 +77,34 @@ router.post(
   protect,
   authorize("recruiter"),
   analyzePublicProject
+);
+
+router.get(
+  "/jobs",
+  protect,
+  authorize("recruiter"),
+  getJobs
+);
+
+router.post(
+  "/jobs",
+  protect,
+  authorize("recruiter"),
+  createJob
+);
+
+router.put(
+  "/jobs/:id",
+  protect,
+  authorize("recruiter"),
+  updateJob
+);
+
+router.delete(
+  "/jobs/:id",
+  protect,
+  authorize("recruiter"),
+  deleteJob
 );
 
 module.exports = router;
