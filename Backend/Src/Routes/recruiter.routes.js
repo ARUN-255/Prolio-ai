@@ -10,6 +10,7 @@ const {
 const {
   searchCandidates,
   getCandidateBySlug,
+  getPublicResumes,
 } = require("../Controllers/Recruiter/searchController");
 
 const {
@@ -34,6 +35,13 @@ router.get(
   protect,
   authorize("recruiter"),
   getCandidateBySlug
+);
+
+router.get(
+  "/resumes/public",
+  protect,
+  authorize("recruiter"),
+  getPublicResumes
 );
 
 router.post(
