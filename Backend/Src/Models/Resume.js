@@ -28,14 +28,7 @@ const Resume = {
   },
 
   // CREATE RESUME
-  async create({
-    userId,
-    title,
-    templateName,
-    resumeData,
-    isPrimary,
-    isPublic,
-  }) {
+  async create({ userId, title, templateName, resumeData, isPrimary, isPublic }) {
     const result = await pool.query(
       `INSERT INTO resumes (
         user_id,
@@ -61,15 +54,7 @@ const Resume = {
   },
 
   // UPDATE RESUME
-  async update({
-    id,
-    userId,
-    title,
-    templateName,
-    resumeData,
-    isPrimary,
-    isPublic,
-  }) {
+  async update({ id, userId, title, templateName, resumeData, isPrimary, isPublic }) {
     const result = await pool.query(
       `UPDATE resumes
        SET
@@ -110,116 +95,152 @@ const Resume = {
   },
 
   // UPDATE COMPLETE RESUME DATA
-async updateResumeData(id, userId, resumeData) {
-  const result = await pool.query(
-    `UPDATE resumes
-     SET resume_data = $1,
-         updated_at = CURRENT_TIMESTAMP
-     WHERE id = $2
-     AND user_id = $3
-     RETURNING *`,
-    [resumeData || {}, id, userId]
-  );
+  async updateResumeData(id, userId, resumeData) {
+    const result = await pool.query(
+      `UPDATE resumes
+       SET resume_data = $1,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $2
+       AND user_id = $3
+       RETURNING *`,
+      [resumeData || {}, id, userId]
+    );
 
-  return result.rows[0];
-},
+    return result.rows[0];
+  },
 
-// UPDATE OR CREATE ONE RESUME SECTION
-async updateSection(id, userId, sectionName, sectionData) {
-  const result = await pool.query(
-    `UPDATE resumes
-     SET resume_data = jsonb_set(
-       COALESCE(resume_data, '{}'::jsonb),
-       ARRAY[$3]::text[],
-       $4::jsonb,
-       true
-     ),
-     updated_at = CURRENT_TIMESTAMP
-     WHERE id = $1
-     AND user_id = $2
-     RETURNING *`,
-    [
-      id,
-      userId,
-      sectionName,
-      JSON.stringify(sectionData)
-    ]
-  );
+  // UPDATE OR CREATE ONE RESUME SECTION
+  async updateSection(id, userId, sectionName, sectionData) {
+    const result = await pool.query(
+      `UPDATE resumes
+       SET resume_data = jsonb_set(
+         COALESCE(resume_data, '{}'::jsonb),
+         ARRAY[$3]::text[],
+         $4::jsonb,
+         true
+       ),
+       updated_at = CURRENT_TIMESTAMP
+       WHERE id = $1
+       AND user_id = $2
+       RETURNING *`,
+      [id, userId, sectionName, JSON.stringify(sectionData)]
+    );
 
-  return result.rows[0];
-},
+    return result.rows[0];
+  },
 
-// DELETE ONE RESUME SECTION
-async deleteSection(id, userId, sectionName) {
-  const result = await pool.query(
-    `UPDATE resumes
-     SET resume_data = resume_data - $3,
-         updated_at = CURRENT_TIMESTAMP
-     WHERE id = $1
-     AND user_id = $2
-     RETURNING *`,
-    [id, userId, sectionName]
-  );
+  // DELETE ONE RESUME SECTION
+  async deleteSection(id, userId, sectionName) {
+    const result = await pool.query(
+      `UPDATE resumes
+       SET resume_data = resume_data - $3,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $1
+       AND user_id = $2
+       RETURNING *`,
+      [id, userId, sectionName]
+    );
 
-  return result.rows[0];
-},
+    return result.rows[0];
+  },
 
-// UPDATE GENERATED PDF URL
-async updatePdfUrl(id, userId, pdfUrl) {
-  const result = await pool.query(
-    `UPDATE resumes
-     SET pdf_url = $1,
-         updated_at = CURRENT_TIMESTAMP
-     WHERE id = $2
-     AND user_id = $3
-     RETURNING *`,
-    [pdfUrl, id, userId]
-  );
+  // UPDATE GENERATED PDF URL
+  async updatePdfUrl(id, userId, pdfUrl) {
+    const result = await pool.query(
+      `UPDATE resumes
+       SET pdf_url = $1,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $2
+       AND user_id = $3
+       RETURNING *`,
+      [pdfUrl, id, userId]
+    );
 
-  return result.rows[0];
-},
+    return result.rows[0];
+  },
 
-// GET ONE PUBLIC RESUME BY ID
-async findPublicById(id) {
-  const result = await pool.query(
-    `SELECT
-      id,
-      user_id,
-      title,
-      template_name,
-      resume_data,
-      is_primary,
-      is_public,
-      pdf_url,
-      created_at,
-      updated_at
-     FROM resumes
-     WHERE id = $1
-     AND is_public = true`,
-    [id]
-  );
+  // GET ONE PUBLIC RESUME BY ID
+  async findPublicById(id) {
+    const result = await pool.query(
+      `SELECT
+        r.id,
+        r.user_id,
+        r.title,
+        r.template_name,
+        r.resume_data,
+        r.is_primary,
+        r.is_public,
+        r.pdf_url,
+        r.created_at,
+        r.updated_at,
+        u.name AS owner_name,
+        u.public_slug AS owner_slug
+       FROM resumes r
+       JOIN users u ON u.id = r.user_id
+       WHERE r.id = $1
+       AND r.is_public = true`,
+      [id]
+    );
 
-  return result.rows[0];
-},
+    return result.rows[0];
+  },
 
-// UPDATE RESUME PUBLIC VISIBILITY
-async updateVisibility(id, userId, isPublic) {
-  const result = await pool.query(
-    `UPDATE resumes
-     SET is_public = $1,
-         updated_at = CURRENT_TIMESTAMP
-     WHERE id = $2
-     AND user_id = $3
-     RETURNING *`,
-    [
-      isPublic,
-      id,
-      userId
-    ]
-  );
+  // GET ALL PUBLIC RESUMES FOR RECRUITER DISCOVERY
+  async findAllPublic() {
+    const result = await pool.query(
+      `SELECT
+        r.id,
+        r.user_id,
+        r.title,
+        r.template_name,
+        r.resume_data,
+        r.is_primary,
+        r.pdf_url,
+        r.updated_at,
+        u.name AS owner_name,
+        u.public_slug AS owner_slug,
+        sp.headline AS owner_headline,
+        sp.location AS owner_location
+       FROM resumes r
+       JOIN users u ON u.id = r.user_id
+       LEFT JOIN student_profiles sp ON sp.user_id = r.user_id
+       WHERE r.is_public = true
+       AND u.role = 'student'
+       AND COALESCE(sp.is_public, false) = true
+       ORDER BY r.is_primary DESC, r.updated_at DESC`
+    );
 
-  return result.rows[0];
-},
+    return result.rows;
+  },
+
+  // GET PUBLIC RESUMES FOR ONE STUDENT
+  async findPublicByUserId(userId) {
+    const result = await pool.query(
+      `SELECT id, user_id, title, template_name, resume_data, is_primary, pdf_url, updated_at
+       FROM resumes
+       WHERE user_id = $1
+       AND is_public = true
+       ORDER BY is_primary DESC, updated_at DESC`,
+      [userId]
+    );
+
+    return result.rows;
+  },
+
+  // UPDATE RESUME PUBLIC VISIBILITY
+  async updateVisibility(id, userId, isPublic) {
+    const result = await pool.query(
+      `UPDATE resumes
+       SET is_public = $1,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $2
+       AND user_id = $3
+       RETURNING *`,
+      [isPublic, id, userId]
+    );
+
+    return result.rows[0];
+  },
 
   // REMOVE PRIMARY FLAG FROM OTHER RESUMES
   async clearPrimary(userId, excludeId = null) {
