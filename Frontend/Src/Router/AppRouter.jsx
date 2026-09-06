@@ -22,6 +22,9 @@ import Resumes from "../Pages/Student/Resumes";
 import CreateResume from "../Pages/Student/CreateResume";
 import ResumeEditor from "../Pages/Student/ResumeEditor";
 import ATSChecker from "../Pages/Student/ATSChecker";
+import RecruiterDashboard from "../Pages/Recruiter/Dashboard";
+import SearchCandidates from "../Pages/Recruiter/SearchCandidates";
+import CandidateProfile from "../Pages/Recruiter/CandidateProfile";
 
 function PlaceholderPage({ title }) {
   return (
@@ -43,20 +46,10 @@ function AppRouter() {
       <Route path="/recruiters" element={<PlaceholderPage title="For Recruiters" />} />
       <Route path="/pricing" element={<PlaceholderPage title="Pricing" />} />
       <Route path="/p/:slug" element={<PublicProfile />} />
-
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Signup />} />
 
-      <Route
-        path="/student"
-        element={
-          <ProtectedRoute>
-            <RoleRoute allowedRole="student">
-              <DashboardLayout />
-            </RoleRoute>
-          </ProtectedRoute>
-        }
-      >
+      <Route path="/student" element={<ProtectedRoute><RoleRoute allowedRole="student"><DashboardLayout /></RoleRoute></ProtectedRoute>}>
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<StudentDashboard />} />
         <Route path="portfolio" element={<PortfolioMaker />} />
@@ -73,19 +66,11 @@ function AppRouter() {
         <Route path="ats" element={<ATSChecker />} />
       </Route>
 
-      <Route
-        path="/recruiter"
-        element={
-          <ProtectedRoute>
-            <RoleRoute allowedRole="recruiter">
-              <DashboardLayout />
-            </RoleRoute>
-          </ProtectedRoute>
-        }
-      >
+      <Route path="/recruiter" element={<ProtectedRoute><RoleRoute allowedRole="recruiter"><DashboardLayout /></RoleRoute></ProtectedRoute>}>
         <Route index element={<Navigate to="dashboard" replace />} />
-        <Route path="dashboard" element={<PlaceholderPage title="Recruiter Dashboard" />} />
-        <Route path="candidates" element={<PlaceholderPage title="Candidates" />} />
+        <Route path="dashboard" element={<RecruiterDashboard />} />
+        <Route path="candidates" element={<SearchCandidates />} />
+        <Route path="candidates/:slug" element={<CandidateProfile />} />
         <Route path="compare" element={<PlaceholderPage title="Resume Comparison" />} />
         <Route path="jobs" element={<PlaceholderPage title="Jobs" />} />
       </Route>
