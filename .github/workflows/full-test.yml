@@ -60,7 +60,7 @@ jobs:
 
       - name: Install backend dependencies
         working-directory: Backend
-        run: npm ci
+        run: npm install --package-lock=false
 
       - name: Install frontend dependencies
         working-directory: Frontend
