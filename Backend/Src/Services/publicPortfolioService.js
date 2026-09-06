@@ -11,8 +11,10 @@ const {
   redisClient,
 } = require("../Config/redis");
 
+const PUBLIC_PORTFOLIO_CACHE_VERSION = "v2";
+
 const buildPublicPortfolio = async (slug) => {
-  const cacheKey = `public-portfolio:${slug}`;
+  const cacheKey = `public-portfolio:${PUBLIC_PORTFOLIO_CACHE_VERSION}:${slug}`;
 
   if (redisClient.isReady) {
     const cachedPortfolio = await redisClient.get(cacheKey);
