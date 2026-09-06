@@ -2,10 +2,7 @@ const express = require("express");
 
 const router = express.Router();
 
-const {
-  protect,
-  authorize,
-} = require("../Middleware/authMiddleware");
+const { protect, authorize } = require("../Middleware/authMiddleware");
 
 const {
   searchCandidates,
@@ -30,81 +27,27 @@ const {
   deleteJob,
 } = require("../Controllers/Recruiter/jobController");
 
-router.get(
-  "/candidates/search",
-  protect,
-  authorize("recruiter"),
-  searchCandidates
-);
+const {
+  getInvitations,
+  createInvitation,
+} = require("../Controllers/Recruiter/invitationController");
 
-router.get(
-  "/candidates/:slug",
-  protect,
-  authorize("recruiter"),
-  getCandidateBySlug
-);
+router.get("/candidates/search", protect, authorize("recruiter"), searchCandidates);
+router.get("/candidates/:slug", protect, authorize("recruiter"), getCandidateBySlug);
 
-router.get(
-  "/resumes/public",
-  protect,
-  authorize("recruiter"),
-  getPublicResumes
-);
+router.get("/resumes/public", protect, authorize("recruiter"), getPublicResumes);
+router.post("/resumes/compare", protect, authorize("recruiter"), comparePublicResumes);
+router.get("/resumes/:id/download", protect, authorize("recruiter"), downloadPublicResume);
+router.get("/resumes/:id", protect, authorize("recruiter"), getPublicResume);
 
-router.post(
-  "/resumes/compare",
-  protect,
-  authorize("recruiter"),
-  comparePublicResumes
-);
+router.post("/projects/:id/analyze", protect, authorize("recruiter"), analyzePublicProject);
 
-router.get(
-  "/resumes/:id/download",
-  protect,
-  authorize("recruiter"),
-  downloadPublicResume
-);
+router.get("/jobs", protect, authorize("recruiter"), getJobs);
+router.post("/jobs", protect, authorize("recruiter"), createJob);
+router.put("/jobs/:id", protect, authorize("recruiter"), updateJob);
+router.delete("/jobs/:id", protect, authorize("recruiter"), deleteJob);
 
-router.get(
-  "/resumes/:id",
-  protect,
-  authorize("recruiter"),
-  getPublicResume
-);
-
-router.post(
-  "/projects/:id/analyze",
-  protect,
-  authorize("recruiter"),
-  analyzePublicProject
-);
-
-router.get(
-  "/jobs",
-  protect,
-  authorize("recruiter"),
-  getJobs
-);
-
-router.post(
-  "/jobs",
-  protect,
-  authorize("recruiter"),
-  createJob
-);
-
-router.put(
-  "/jobs/:id",
-  protect,
-  authorize("recruiter"),
-  updateJob
-);
-
-router.delete(
-  "/jobs/:id",
-  protect,
-  authorize("recruiter"),
-  deleteJob
-);
+router.get("/invitations", protect, authorize("recruiter"), getInvitations);
+router.post("/invitations", protect, authorize("recruiter"), createInvitation);
 
 module.exports = router;
