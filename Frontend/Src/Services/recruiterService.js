@@ -59,3 +59,13 @@ export const deleteRecruiterJob = async (id) => {
   const response = await api.delete(`/recruiter/jobs/${id}`);
   return response.data;
 };
+
+export const getRecruiterInvitations = async () => {
+  const response = await api.get("/recruiter/invitations");
+  return response.data;
+};
+
+export const sendRecruiterInvitation = async (payload) => {
+  const response = await api.post("/recruiter/invitations", payload);
+  return response.data;
+};
