@@ -52,6 +52,7 @@ const buildPublicPortfolio = async (slug) => {
   const publicProjects = projects
     .filter((project) => project.is_public)
     .map((project) => ({
+      id: project.id,
       title: project.title,
       description: project.description,
       tech_stack: project.tech_stack,
