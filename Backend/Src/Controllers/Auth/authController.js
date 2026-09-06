@@ -3,6 +3,18 @@ const jwt = require("jsonwebtoken");
 const User = require("../../Models/User");
 const subscriptionService = require("../../Services/subscriptionService");
 
+const buildDefaultSlug = (name, userId) => {
+  const base = String(name || "student")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]/g, "")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "") || "student";
+
+  return `${base}-${userId}`;
+};
+
 const register = async (req, res) => {
   console.log("Register endpoint reached");
   try {
@@ -53,13 +65,24 @@ const register = async (req, res) => {
 
     const passwordHash = await bcrypt.hash(password, 12);
 
-    const user = await User.create({
+    let user = await User.create({
       name,
       email: email || null,
       phone: phone || null,
       passwordHash,
       role,
     });
+
+    // Every student receives a stable unique public portfolio URL immediately.
+    // Pro users can later replace this generated slug through the custom-link route.
+    if (user.role === "student") {
+      const publicSlug = buildDefaultSlug(user.name, user.id);
+      const updatedUser = await User.updatePublicSlug(user.id, publicSlug);
+      user = {
+        ...user,
+        public_slug: updatedUser.public_slug,
+      };
+    }
 
     // Every account starts on its role's Free plan. This keeps quota-protected
     // features available immediately after registration.
@@ -141,6 +164,7 @@ const login = async (req, res) => {
         email: user.email,
         phone: user.phone,
         role: user.role,
+        public_slug: user.public_slug || null,
       },
       token,
     });
