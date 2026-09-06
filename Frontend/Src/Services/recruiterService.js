@@ -14,3 +14,48 @@ export const getCandidateBySlug = async (slug) => {
   const response = await api.get(`/recruiter/candidates/${encodeURIComponent(slug)}`);
   return response.data;
 };
+
+export const getPublicResumes = async () => {
+  const response = await api.get("/recruiter/resumes/public");
+  return response.data;
+};
+
+export const getPublicResume = async (id) => {
+  const response = await api.get(`/recruiter/resumes/${id}`);
+  return response.data;
+};
+
+export const comparePublicResumes = async (payload) => {
+  const response = await api.post("/recruiter/resumes/compare", payload);
+  return response.data;
+};
+
+export const getPublicResumeDownload = async (id) => {
+  const response = await api.get(`/recruiter/resumes/${id}/download`);
+  return response.data;
+};
+
+export const analyzePublicProject = async (projectId, payload = {}) => {
+  const response = await api.post(`/recruiter/projects/${projectId}/analyze`, payload);
+  return response.data;
+};
+
+export const getRecruiterJobs = async () => {
+  const response = await api.get("/recruiter/jobs");
+  return response.data;
+};
+
+export const createRecruiterJob = async (payload) => {
+  const response = await api.post("/recruiter/jobs", payload);
+  return response.data;
+};
+
+export const updateRecruiterJob = async (id, payload) => {
+  const response = await api.put(`/recruiter/jobs/${id}`, payload);
+  return response.data;
+};
+
+export const deleteRecruiterJob = async (id) => {
+  const response = await api.delete(`/recruiter/jobs/${id}`);
+  return response.data;
+};
