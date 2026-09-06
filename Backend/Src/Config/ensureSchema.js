@@ -7,6 +7,9 @@ const ensureSchema = async () => {
       ADD COLUMN IF NOT EXISTS current_period_end TIMESTAMP,
       ADD COLUMN IF NOT EXISTS cancel_at_period_end BOOLEAN NOT NULL DEFAULT FALSE;
 
+    ALTER TABLE resumes
+      ADD COLUMN IF NOT EXISTS pdf_url TEXT;
+
     CREATE TABLE IF NOT EXISTS recruiter_jobs (
       id SERIAL PRIMARY KEY,
       recruiter_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
